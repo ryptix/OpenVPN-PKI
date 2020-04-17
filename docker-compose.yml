@@ -1,0 +1,17 @@
+version: "3.3"
+services:
+  docker-ca:
+    build: ./build
+    environment:
+      - PASS_CA=test
+      - PASS_SERVER=test
+      - OPENVPN_COUNTRY=FR
+      - OPENVPN_PROVINCE=Bretagne
+      - OPENVPN_CITY=RENNES
+      - OPENVPN_ORG=Ryptix
+      - OPENVPN_EMAIL=baptistethi@gmail.com
+      - OPENVPN_OU=rypti
+      - OPENVPN_KEY=4096
+
+    volumes:
+      - ./data:/etc/openvpn
