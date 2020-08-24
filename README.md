@@ -1,5 +1,5 @@
-# OpenVPN-CA-DOCKER
-A Open VPN CA which run inn docker
+# OpenVPN-PKI
+An OpenVPN PKI creator which run in docker
 
 ## Start-up
 
