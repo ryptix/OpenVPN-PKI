@@ -11,7 +11,6 @@ services:
       - OPENVPN_ORG=Ryptix
       - OPENVPN_EMAIL=baptistethi@gmail.com
       - OPENVPN_OU=rypti
-      - OPENVPN_KEY=4096
 
     volumes:
       - ./data:/etc/openvpn
