@@ -3,14 +3,15 @@ services:
   docker-ca:
     build: ./build
     environment:
-      - PASS_CA=test
+      - PASS_CA=wut
       - PASS_SERVER=test
-      - OPENVPN_COUNTRY=FR
-      - OPENVPN_PROVINCE=Bretagne
-      - OPENVPN_CITY=RENNES
-      - OPENVPN_ORG=Ryptix
-      - OPENVPN_EMAIL=baptistethi@gmail.com
-      - OPENVPN_OU=rypti
+      - EASYRSA_REQ_COUNTRY=FR
+      - EASYRSA_REQ_PROVINCE=Bretagne
+      - EASYRSA_REQ_CITY=RENNES
+      - EASYRSA_REQ_ORG=Ryptix
+      - EASYRSA_REQ_EMAIL=baptistethi@gmail.com
+      - EASYRSA_REQ_OU=rypti
+      - EASYRSA_REQ_SIZE=4096
 
     volumes:
-      - ./data:/etc/openvpn
+      - ./data:/root/openvpn

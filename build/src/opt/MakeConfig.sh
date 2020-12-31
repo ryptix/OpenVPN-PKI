@@ -30,3 +30,4 @@ cat ${BASE_CONFIG} \
     > ${OUTPUT_DIR}/${1}.ovpn
 fi
 
+

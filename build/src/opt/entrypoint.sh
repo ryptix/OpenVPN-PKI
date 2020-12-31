@@ -1,167 +1,140 @@
-#!/bin/sh
+#!/bin/bash
 
-cp /opt/* /etc/openvpn
+directory=/root/openvpn
+params=(EASYRSA_REQ_COUNTRY EASYRSA_REQ_PROVINCE EASYRSA_REQ_CITY EASYRSA_REQ_ORG EASYRSA_REQ_EMAIL EASYRSA_REQ_OU EASYRSA_REQ_SIZE)
 
-if [ ! -d /etc/openvpn/easy-rsa ];then
-    mkdir /etc/openvpn/easy-rsa
+# Create the specified directory
+if [ ! -d $directory ];then
+    mkdir $directory
+fi
+cd $directory
+
+# Create easy-rsa directory
+if [ ! -d $directory/easy-rsa ];then
+    mkdir $directory/easy-rsa
 fi
 
-ln -s /usr/share/easy-rsa/* /etc/openvpn/easy-rsa/
-
-cd /etc/openvpn/easy-rsa
+# link easy-rsa executable to root easy-rsa directory
+ln -s /usr/share/easy-rsa/* /root/openvpn/easy-rsa/
 
 # Create user directory
-if [ -d /etc/openvpn/client ];then
-	mkdir /etc/openvpn/client
+if [ -d $directory/client ];then
+	mkdir $directory/client
 fi
 
 # Copy base config for user config
-if [ -f /etc/openvpn/client/base.conf ];then
-	cp /usr/share/doc/openvpn/examples/sample-config-files/client.conf /etc/openvpn/client/base.conf
+if [ -f $directory/client/base.conf ];then
+	cp /usr/share/doc/openvpn/examples/sample-config-files/client.conf $directory/client/base.conf
 fi
 
 # Create vars file if not created
-if [ ! -f /etc/openvpn/easy-rsa/vars ];then
-# Test if ALL ENV Variable are SET
-    cp /etc/openvpn/easy-rsa/vars.example /etc/openvpn/easy-rsa/vars    
+if [ ! -f $directory/easy-rsa/vars ];then
+    cp $directory/easy-rsa/vars.example $directory/easy-rsa/vars    
 
-	if [ -z "${OPENVPN_COUNTRY}" ];then
-		echo "Please Set OPENVPN_COUNTRY"
-		exit 2
-	else
-		echo "Changing EASYRSA_REQ_COUNTRY"
-		sed -i 's/#set_var\ EASYRSA_REQ_COUNTRY.*/set_var\ EASYRSA_REQ_COUNTRY\ \"'${OPENVPN_COUNTRY}'\"/g' /etc/openvpn/easy-rsa/vars
-	fi
-
-	if [ -z "${OPENVPN_PROVINCE}" ];then
-		echo "Please Set OPENVPN_PROVINCE"
-		exit 2	
-	else
-		echo "Changing EASYRSA_REQ_PROVINCE"
-		sed -i 's,#set_var\ EASYRSA_REQ_PROVINCE.*,set_var\ EASYRSA_REQ_PROVINCE\ \"'${OPENVPN_PROVINCE}'\",g' /etc/openvpn/easy-rsa/vars
-	fi
-
-	if [ -z "${OPENVPN_CITY}" ];then
-		echo "Please Set OPENVPN_CITY"
-		exit 2
-	else
-		echo "Changing EASYRSA_REQ_CITY"
-		sed -i 's,#set_var\ EASYRSA_REQ_CITY.*,set_var\ EASYRSA_REQ_CITY\ \"'${OPENVPN_CITY}'\",g' /etc/openvpn/easy-rsa/vars
-	fi
-
-	if [ -z "${OPENVPN_ORG}" ];then
-		echo "Please Set OPENVPN_ORG"
-		exit 2
-	else
-		echo "Changing EASYRSA_REQ_ORG"
-		sed -i 's,#set_var\ EASYRSA_REQ_ORG.*,set_var\ EASYRSA_REQ_ORG\ \"'${OPENVPN_ORG}'\",g' /etc/openvpn/easy-rsa/vars
-	fi
-
-	if [ -z "${OPENVPN_EMAIL}" ];then
-		echo "Please Set OPENVPN_EMAIL"
-		exit 2
-	else
-		echo "Changing EASYRSA_REQ_EMAIL"
-		sed -i 's,#set_var\ EASYRSA_REQ_EMAIL.*,set_var\ EASYRSA_REQ_EMAIL\ \"'${OPENVPN_EMAIL}'\",g' /etc/openvpn/easy-rsa/vars
-	fi
-
-	if [ -z "${OPENVPN_OU}" ];then
-		echo "Please Set OPENVPN_OU"
-		exit 2
-	else
-		echo "Changing EASYRSA_REQ_OU"
-		sed -i 's,#set_var\ EASYRSA_REQ_OU.*,set_var\ EASYRSA_REQ_OU\ \"'${OPENVPN_OU}'\",g' /etc/openvpn/easy-rsa/vars
-	fi
-
-	if [ ! -z "${OPENVPN_KEY}" ];then
-		sed -i 's,#set_var\ EASYRSA_KEY_SIZE.*,set_var\ EASYRSA_KEY_SIZE\ '${OPENVPN_KEY}',g' /etc/openvpn/easy-rsa/vars	
-	fi
+    for var in "${params[@]}";do
+       if [ -z ${var} ];then
+           echo "Please set $var -> ${var}"
+           exit 2 
+       else
+           echo "$var -> $("$var")"
+           echo "Changing $var"
+           sed -i 's/#set_var\ '$var'.*/set_var\ '$var'\ \"'${var}'\"/g' $directory/easy-rsa/vars
+       fi
+    done
 fi
 
-# Test if all necessary file are created
-# If some file are missing it delete everything and recreate ALL
-if [ ! -d /etc/openvpn/easy-rsa/pki ] || [ ! -f /etc/openvpn/ca.crt ] && [ ! -f /etc/openvpn/${NAME_CA}.crt ] || [ ! -f /etc/openvpn/ta.key ] || [ ! -f /etc/openvpn/server.crt ] && [ ! -f /etc/openvpn/${NAME_SERVER}.crt ] || [ ! -f /etc/openvpn/dh.pem ];then
-	echo " -- You're missing important file... Creating"
+# Test IF pki directory is created AND usefull file are available
+# ELSE delete ALL file and recreate everything
+if [ ! -d $directory/easy-rsa/pki ] || 
+    [ ! -f $directory/ca.crt ] && 
+    [ ! -f $directory/${NAME_CA}.crt ] || 
+    [ ! -f $directory/ta.key ] || 
+    [ ! -f $directory/server.crt ] && 
+    [ ! -f $directory/${NAME_SERVER}.crt ] || 
+    [ ! -f $directory/dh.pem ];then
 	
-	if [ -f /etc/openvpn/ca.crt ];then
-		rm /etc/openvpn/ca.crt
-	elif [ -f /etc/openvpn/${NAME_CA}.crt ];then
-		rm /etc/openvpn/${NAME_CA}.crt
+    echo " -- You're missing important file... Creating"
+	
+	if [ -f $directory/ca.crt ];then
+		rm $directory/ca.crt
+	elif [ -f $directory/${NAME_CA}.crt ];then
+		rm $directory/${NAME_CA}.crt
 	fi
 	
-    if [ -f /etc/openvpn/ta.key ];then
-		rm /etc/openvpn/ta.key
+    if [ -f $directory/ta.key ];then
+		rm $directory/ta.key
 	fi
 	
-    if [ -f /etc/openvpn/server.crt ];then
-		rm /etc/openvpn/server.crt
-	elif [ -f /etc/openvpn/${NAME_SERVER}.crt ];then
-		rm /etc/openvpn/${NAME_SERVER}.crt
+    if [ -f $directory/server.crt ];then
+		rm $directory/server.crt
+	elif [ -f $directory/${NAME_SERVER}.crt ];then
+		rm $directory/${NAME_SERVER}.crt
 	fi
 
-	if [ -f /etc/openvpn/dh.pem ];then
-		rm /etc/openvpn/dh.pem
+	if [ -f $directory/dh.pem ];then
+		rm $directory/dh.pem
 	fi
 	
-    if [ -d /etc/openvpn/easy-rsa/pki ];then
-		rm -rf /etc/openvpn/easy-rsa/pki
+    if [ -d $directory/pki ];then
+		rm -rf $directory/pki
 	fi
 	
 	echo "Initialisation of pki"
     # initialise the PKI
-	/etc/openvpn/easy-rsa/easyrsa init-pki
+	$directory/easy-rsa/easyrsa init-pki
 	
     # Build the Certificat Authority
     echo -e "${PASS_CA}"	
 	if [ ! -z "${PASS_CA}" ];then
 		echo "building ca"
-		python3 /etc/openvpn/build-ca.py
+		python3 /opt/VPN.py -b $directory
 	else
 		echo "Please set PASS_CA"
 	fi
 
-    # Copy the CA to /etc/openvpn
+    # Copy the CA to $directory
 	if [ ! -z "${NAME_CA}" ];then
-		cp /etc/openvpn/easy-rsa/pki/${NAME_CA}.crt /etc/openvpn/
+		cp $directory/pki/${NAME_CA}.crt $directory/
 	else
-		cp /etc/openvpn/easy-rsa/pki/ca.crt /etc/openvpn/
+		cp $directory/pki/ca.crt $directory/
 	fi
 
     # Create Server Certificat
 	if [ ! -z "${PASS_SERVER}" ] && [ ! -z "${PASS_CA}" ];then
 		echo "Generating server cert"
-		python3 /etc/openvpn/gen-req.py
+		python3 /opt/VPN.py -g $directory
 		echo "Signing server cert"
-		python3 /etc/openvpn/sign-req.py
+		python3 /opt/VPN.py -s $directory
 	else
 		echo "Please set PASS_SERVER"
 	fi
 
-    # Copy the Server Cert to /etc/openvpn
+    # Copy the Server Cert to $directory
 	if [ ! -z "${NAME_SERVER}" ];then
-		cp /etc/openvpn/easy-rsa/pki/issued/${NAME_SERVER}.crt /etc/openvpn/
-		cp /etc/openvpn/easy-rsa/pki/private/${NAME_SERVER}.key /etc/openvpn/
+		cp $directory/pki/issued/${NAME_SERVER}.crt $directory/
+		cp $directory/pki/private/${NAME_SERVER}.key $directory/
 	else
-		ls -la /etc/openvpn/easy-rsa/pki/issued 
-		cp /etc/openvpn/easy-rsa/pki/issued/server.crt /etc/openvpn/
-		cp /etc/openvpn/easy-rsa/pki/private/server.key /etc/openvpn/
+		ls -la $directory/pki/issued 
+		cp $directory/pki/issued/server.crt $directory/
+		cp $directory/pki/private/server.key $directory/
 	fi
 	
 	echo "Generating dh.pem"
-    # Generate gen-dh and copy it to /etc/openvpn
-    /etc/openvpn/easy-rsa/easyrsa gen-dh
-	cp /etc/openvpn/easy-rsa/pki/dh.pem /etc/openvpn/
+    # Generate gen-dh and copy it to $directory
+    $directory/easy-rsa/easyrsa gen-dh
+	cp $directory/pki/dh.pem $directory/
 	
 	echo "Generating ta.key"
-    # Generate ta.key and copy it to /etc/openvpn
-	openvpn --genkey --secret /etc/openvpn/ta.key
+    # Generate ta.key and copy it to $directory
+	openvpn --genkey --secret $directory/ta.key
+    cp $directory/ta.key $directory/
 
 fi
 
 if [ ! -z "${UserPassFile}" ];then
-	if [ -f /etc/openvpn/${UserPassFile} ];then
+    if [ -f "$directory/${UserPassFile}" ];then
 		echo "Generating Users Creds"
-		#python3 ../gen_creds.py	
+		# python3 ../gen_creds.py	
 	else
 		echo "No file found to create users from."
 	fi	

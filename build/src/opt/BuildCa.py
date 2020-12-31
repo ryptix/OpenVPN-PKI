@@ -6,8 +6,10 @@ NAME = os.environ.get("NAME_CA")
 if NAME == None :
     NAME = "ca"
 
+print("Using directory : "+sys.argv[1])
+
 print("Creating Certificat Authority")
-child = pexpect.spawn("/etc/openvpn/easy-rsa/easyrsa build-ca")
+child = pexpect.spawn(sys.argv[1]+"/easy-rsa/easyrsa build-ca")
 print("Child Spawned")
 child.expect("Passphrase")
 print("Passphrase Expected")
@@ -25,3 +27,4 @@ child.expect(pexpect.EOF)
 print("END Expected")
 child.close()
 print("Program ENDS")
+

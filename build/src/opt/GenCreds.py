@@ -46,3 +46,4 @@ for line in lines:
     pexpect.run(["cp", "/etc/openvpn/client/make_config.sh",("/etc/openvpn/client/" + creds[0] + "/")])
     pexpect.run([("/etc/openvpn/client/make_config.sh"),creds[0]])
 
+
